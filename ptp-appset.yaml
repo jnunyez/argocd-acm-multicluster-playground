@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ptp-operator-appset
+  namespace: openshift-gitops
+spec:
+  generators:
+    - clusterDecisionResource:
+        configMapRef: acm-placement
+        labelSelector:
+          matchLabels:
+            cluster.open-cluster-management.io/placement: online-ptp-clusters
+        requeueAfterSeconds: 10
+  template:
+    metadata:
+      name: 'ptp-{{name}}'
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/jnunyez/vse-carslab-managed'
+        targetRevision: main
+        path: 'components/apps/openshift-ptp/overlays/default'
+      destination:
+        server: '{{server}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        retry:
+          limit: 15
+          backoff:
+            duration: 15s
+            factor: 2
+            maxDuration: 5m
